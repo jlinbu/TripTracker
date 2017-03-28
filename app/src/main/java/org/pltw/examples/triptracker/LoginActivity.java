@@ -1,6 +1,7 @@
 package org.pltw.examples.triptracker;
 
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -113,6 +114,8 @@ public class LoginActivity extends AppCompatActivity {
                     @Override
                     public void handleResponse(BackendlessUser response) {
                         Toast.makeText(view.getContext(), response.getProperty("name") + " logged in successfully!", Toast.LENGTH_SHORT).show();
+                        Intent intent = new Intent(LoginActivity.this, TripListActivity.class);
+                        startActivity(intent);
                     }
 
                     @Override
@@ -155,6 +158,8 @@ public class LoginActivity extends AppCompatActivity {
                         @Override
                         public void handleResponse(BackendlessUser backendlessUser) {
                             Log.i(TAG, "Successfully registered user: " + backendlessUser.getProperty("name"));
+                            Intent intent = new Intent(LoginActivity.this, LoginActivity.class);
+                            startActivity(intent);
                         }
 
                         @Override

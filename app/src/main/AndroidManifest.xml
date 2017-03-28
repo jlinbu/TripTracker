@@ -17,6 +17,17 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <activity
+            android:name=".TripActivity"
+            android:label="@string/trip_list_text" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".TripListActivity" />
+        </activity>
+        <activity
+            android:name=".TripListActivity"
+            android:label="@string/trip_list_text" >
+        </activity>
     </application>
 
 </manifest>
