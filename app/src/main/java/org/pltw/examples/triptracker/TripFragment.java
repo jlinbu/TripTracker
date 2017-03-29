@@ -307,6 +307,7 @@ public class TripFragment extends Fragment {
                 @Override
                 public void run() {
                     Backendless.Data.of(Trip.class).save(mTrip);
+                    getActivity().finish();
                 }
             });
             thread.start();

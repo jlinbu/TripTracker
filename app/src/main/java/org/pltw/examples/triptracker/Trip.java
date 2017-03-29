@@ -13,6 +13,7 @@ public class Trip implements IntentData {
     private Date startDate;
     private Date endDate;
     private boolean shared;
+    private String ownerId;
 
 
     public Trip(){
@@ -67,5 +68,13 @@ public class Trip implements IntentData {
 
     public void setShared(boolean shared) {
         this.shared = shared;
+    }
+
+    public String getOwnerId() {
+        return ownerId;
+    }
+
+    public void setOwnerId(String ownerId) {
+        this.ownerId = ownerId;
     }
 }

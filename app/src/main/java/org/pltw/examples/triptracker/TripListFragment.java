@@ -14,15 +14,23 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
 import com.backendless.Backendless;
 import com.backendless.BackendlessCollection;
+import com.backendless.BackendlessUser;
+import com.backendless.async.callback.AsyncCallback;
 import com.backendless.async.callback.BackendlessCallback;
 import com.backendless.exceptions.BackendlessFault;
+import com.backendless.persistence.BackendlessDataQuery;
+
+import org.w3c.dom.Text;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.zip.Inflater;
 
 /*
  * Created by klaidley on 4/13/2015.
@@ -56,6 +64,7 @@ public class TripListFragment extends ListFragment {
         //The adapter is responsible for feeding the data to the list view
         TripAdapter adapter = new TripAdapter(mTrips);
         setListAdapter(adapter);
+
 
     }
 
@@ -180,9 +189,16 @@ public class TripListFragment extends ListFragment {
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
-
-			// todo: Activity 3.1.4
-            return null;
+            if (convertView == null){
+                convertView = getActivity().getLayoutInflater().inflate(R.layout.fragment_trip_list_item, null);
+            }
+            Trip trip = getItem(position);
+            TextView tripName = (TextView)convertView.findViewById(R.id.trip_list_item_textName);
+            tripName.setText(trip.getName());
+            Log.i(TAG, trip.getName());
+            TextView tripStartDate = (TextView)convertView.findViewById(R.id.trip_list_item_textStartDate);
+            tripStartDate.setText(DateFormat.format("MM-dd-yyyy", trip.getStartDate()));
+            return convertView;
 		
         }
     }
@@ -195,10 +211,39 @@ public class TripListFragment extends ListFragment {
 
     private void refreshTripList() {
 
-		// todo: Activity 3.1.4
+        /* 3.1.4 Part 3 */
+        BackendlessUser user = Backendless.UserService.CurrentUser();
+        BackendlessDataQuery query = new BackendlessDataQuery();
+        query.setWhereClause("ownerId='" + user.getObjectId() + "'");
+
+        Backendless.Persistence.of(Trip.class).find(query, new BackendlessCallback<BackendlessCollection<Trip>>() {
+            @Override
+            public void handleResponse(BackendlessCollection<Trip> response) {
+                Log.d(TAG, response.getData().toString());
+                mTrips.clear();
+                for (Trip trip : response.getData()){
+                    mTrips.add(trip);
+                }
+                ((TripAdapter)getListAdapter()).notifyDataSetChanged();
+            }
+
+            @Override
+            public void handleFault(BackendlessFault fault) {
+                Log.e(TAG, fault.toString());
+            }
+        });
 
     }
 
+    /* 3.1.4 */
+    /*
+    refresh the list of trips when the TripActivity is done
+     */
+    @Override
+    public void onResume() {
+        refreshTripList();
+        super.onResume();
+    }
 
 
 }
