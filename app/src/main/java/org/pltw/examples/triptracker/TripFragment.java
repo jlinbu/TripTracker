@@ -199,7 +199,7 @@ public class TripFragment extends Fragment {
                 } else {
                     //delete the record from Backendless if it is an existing record
 
-					// todo: Activity 3.1.5
+					deleteTrip(item);
 					
                 }
 				return true;
@@ -302,6 +302,7 @@ public class TripFragment extends Fragment {
             mTrip.setStartDate(sDate);
             mTrip.setEndDate(eDate);
             mTrip.setShared(shared);
+            mTrip.setOwnerId(Backendless.UserService.CurrentUser().getObjectId());
 
             Thread thread = new Thread(new Runnable() {
                 @Override
@@ -326,7 +327,28 @@ public class TripFragment extends Fragment {
     }
 
     private void deleteTrip(MenuItem menuItem) {
-		// todo: Activity 3.1.5
+		if (mTrip.getObjectId() != null){
+            final Trip deleteTrip = mTrip;
+            Thread deleteThread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    Backendless.Data.of(Trip.class).remove(deleteTrip);
+                    getActivity().finish();
+                }
+            });
+            deleteThread.start();
+            try {
+                deleteThread.join();
+            } catch (InterruptedException e) {
+                Log.e(TAG, "Deleting trip failed: " + e.getMessage());
+                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                builder.setMessage(e.getMessage());
+                builder.setTitle(R.string.delete_error_title);
+                builder.setPositiveButton(android.R.string.ok, null);
+                AlertDialog dialog = builder.create();
+                dialog.show();
+            }
+        }
     }
 
 }

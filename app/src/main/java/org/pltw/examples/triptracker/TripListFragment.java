@@ -1,5 +1,6 @@
 package org.pltw.examples.triptracker;
 
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
@@ -30,6 +31,7 @@ import org.w3c.dom.Text;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.RunnableFuture;
 import java.util.zip.Inflater;
 
 /*
@@ -99,8 +101,7 @@ public class TripListFragment extends ListFragment {
         intent.putExtra(Trip.EXTRA_TRIP_END_DATE, trip.getEndDate());
         intent.putExtra(Trip.EXTRA_TRIP_PUBLIC, trip.isShared());
         intent.putExtra(Trip.EXTRA_TRIP_PUBLIC_VIEW, mPublicView);
-		
-        // todo: Activity 3.1.5
+		startActivity(intent);
     }
 
     @Override
@@ -205,8 +206,27 @@ public class TripListFragment extends ListFragment {
 
     private void deleteTrip(Trip trip) {
 
-		// todo: Activity 3.1.5
-
+        final Trip deleteTrip = trip;
+		Thread deleteThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Backendless.Data.of(Trip.class).remove(deleteTrip);
+                Log.i(TAG, deleteTrip.getName() + " removed.");
+                refreshTripList();
+            }
+        });
+        deleteThread.start();
+        try {
+            deleteThread.join();
+        } catch (InterruptedException e) {
+            Log.e(TAG, "Deleting trip failed: " + e.getMessage());
+            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+            builder.setMessage(e.getMessage());
+            builder.setTitle(R.string.delete_error_title);
+            builder.setPositiveButton(android.R.string.ok, null);
+            AlertDialog dialog = builder.create();
+            dialog.show();
+        }
     }
 
     private void refreshTripList() {
