@@ -1,5 +1,6 @@
 package org.pltw.examples.triptracker;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
@@ -26,6 +27,7 @@ import com.backendless.async.callback.AsyncCallback;
 import com.backendless.async.callback.BackendlessCallback;
 import com.backendless.exceptions.BackendlessFault;
 import com.backendless.persistence.BackendlessDataQuery;
+import com.backendless.persistence.QueryOptions;
 
 import org.w3c.dom.Text;
 
@@ -101,7 +103,8 @@ public class TripListFragment extends ListFragment {
         intent.putExtra(Trip.EXTRA_TRIP_END_DATE, trip.getEndDate());
         intent.putExtra(Trip.EXTRA_TRIP_PUBLIC, trip.isShared());
         intent.putExtra(Trip.EXTRA_TRIP_PUBLIC_VIEW, mPublicView);
-		startActivity(intent);
+        startActivityForResult(intent, Activity.RESULT_OK);
+
     }
 
     @Override
@@ -131,6 +134,19 @@ public class TripListFragment extends ListFragment {
         inflater.inflate(R.menu.menu_trips, menu);
     }
 
+
+    @Override
+    public void onPrepareOptionsMenu(Menu menu){
+        //toggle between Public Trips and My Trips action bar items
+        if (mPublicView) {
+            menu.findItem(R.id.action_public_trips).setVisible(false);
+            menu.findItem(R.id.action_my_trips).setVisible(true);
+        } else {
+            menu.findItem(R.id.action_public_trips).setVisible(true);
+            menu.findItem(R.id.action_my_trips).setVisible(false);
+        }
+    }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         Intent intent;
@@ -151,7 +167,17 @@ public class TripListFragment extends ListFragment {
                 startActivity(intent);
                 return true;
 
-			// todo: Activity 3.1.6
+            case R.id.action_public_trips:
+                intent = new Intent(getActivity(), TripListActivity.class);
+                intent.putExtra(Trip.EXTRA_TRIP_PUBLIC_VIEW, true);
+                startActivity(intent);
+                return true;
+
+            case R.id.action_my_trips:
+                intent = new Intent(getActivity(), TripListActivity.class);
+                intent.putExtra(Trip.EXTRA_TRIP_PUBLIC_VIEW, false);
+                startActivity(intent);
+                return true;
 			
             case R.id.action_logout:
 				// Logs user out and  resets Backendless CurrentUser to null
@@ -206,26 +232,44 @@ public class TripListFragment extends ListFragment {
 
     private void deleteTrip(Trip trip) {
 
-        final Trip deleteTrip = trip;
-		Thread deleteThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                Backendless.Data.of(Trip.class).remove(deleteTrip);
-                Log.i(TAG, deleteTrip.getName() + " removed.");
-                refreshTripList();
+        if (trip.getOwnerId().equals(Backendless.UserService.loggedInUser())) {
+            final Trip deleteTrip = trip;
+            Thread deleteThread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    Backendless.Data.of(Trip.class).remove(deleteTrip);
+                    Log.i(TAG, deleteTrip.getName() + " removed.");
+                    refreshTripList();
+                }
+            });
+            deleteThread.start();
+            try {
+                deleteThread.join();
+            } catch (InterruptedException e) {
+                Log.e(TAG, "Deleting trip failed: " + e.getMessage());
+                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                builder.setMessage(e.getMessage());
+                builder.setTitle(R.string.delete_error_title);
+                builder.setPositiveButton(android.R.string.ok, null);
+                AlertDialog dialog = builder.create();
+                dialog.show();
             }
-        });
-        deleteThread.start();
-        try {
-            deleteThread.join();
-        } catch (InterruptedException e) {
-            Log.e(TAG, "Deleting trip failed: " + e.getMessage());
+        }
+        else {
             AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-            builder.setMessage(e.getMessage());
-            builder.setTitle(R.string.delete_error_title);
+            builder.setMessage(getString(R.string.delete_error_message));
+            builder.setTitle(getString(R.string.delete_error_title));
             builder.setPositiveButton(android.R.string.ok, null);
             AlertDialog dialog = builder.create();
             dialog.show();
+        }
+    }
+
+
+    @Override
+    public void onActivityResult(int requestCode,int resultCode, Intent intent) {
+        if (resultCode == Activity.RESULT_OK) {
+            mPublicView = intent.getBooleanExtra(Trip.EXTRA_TRIP_PUBLIC_VIEW, false);
         }
     }
 
@@ -234,7 +278,15 @@ public class TripListFragment extends ListFragment {
         /* 3.1.4 Part 3 */
         BackendlessUser user = Backendless.UserService.CurrentUser();
         BackendlessDataQuery query = new BackendlessDataQuery();
-        query.setWhereClause("ownerId='" + user.getObjectId() + "'");
+        if (mPublicView){
+            query.setWhereClause("shared = true");
+        }
+        else {
+            query.setWhereClause("ownerId='" + user.getObjectId() + "'");
+        }
+        QueryOptions qo = new QueryOptions();
+        qo.addSortByOption("startDate");
+        query.setQueryOptions(qo);
 
         Backendless.Persistence.of(Trip.class).find(query, new BackendlessCallback<BackendlessCollection<Trip>>() {
             @Override

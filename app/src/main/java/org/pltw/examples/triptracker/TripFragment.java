@@ -169,7 +169,7 @@ public class TripFragment extends Fragment {
         switch (item.getItemId()) {
             case android.R.id.home:
                 if (NavUtils.getParentActivityName(getActivity()) != null) {
-                    NavUtils.navigateUpFromSameTask(getActivity());
+                    finishWithResults();
                 }
                 return true;
             case R.id.action_post:
@@ -308,7 +308,7 @@ public class TripFragment extends Fragment {
                 @Override
                 public void run() {
                     Backendless.Data.of(Trip.class).save(mTrip);
-                    getActivity().finish();
+
                 }
             });
             thread.start();
@@ -323,7 +323,15 @@ public class TripFragment extends Fragment {
                 AlertDialog dialog = builder.create();
                 dialog.show();
             }
+            finishWithResults();
         }
+    }
+
+    private void finishWithResults(){
+        Intent intent = getActivity().getIntent();
+        intent.putExtra(Trip.EXTRA_TRIP_PUBLIC_VIEW, mPublicView);
+        getActivity().setResult(Activity.RESULT_OK, intent);
+        getActivity().finish();
     }
 
     private void deleteTrip(MenuItem menuItem) {
@@ -333,7 +341,7 @@ public class TripFragment extends Fragment {
                 @Override
                 public void run() {
                     Backendless.Data.of(Trip.class).remove(deleteTrip);
-                    getActivity().finish();
+
                 }
             });
             deleteThread.start();
@@ -348,6 +356,7 @@ public class TripFragment extends Fragment {
                 AlertDialog dialog = builder.create();
                 dialog.show();
             }
+            finishWithResults();
         }
     }
 
