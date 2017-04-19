@@ -1,11 +1,14 @@
 package org.pltw.examples.triptracker;
 
+import android.util.Log;
+
+import java.util.Comparator;
 import java.util.Date;
 
 /**
  * Created by jlinburg on 3/28/17.
  */
-public class Trip implements IntentData {
+public class Trip implements IntentData, Comparable{
 
     private String objectId;
     private String name;
@@ -76,5 +79,10 @@ public class Trip implements IntentData {
 
     public void setOwnerId(String ownerId) {
         this.ownerId = ownerId;
+    }
+
+    @Override
+    public int compareTo(Object o) {
+        return name.compareTo(((Trip)o).getName());
     }
 }

@@ -296,6 +296,7 @@ public class TripListFragment extends ListFragment {
                 for (Trip trip : response.getData()){
                     mTrips.add(trip);
                 }
+                ArrayListSorter.insertionSort(mTrips);
                 ((TripAdapter)getListAdapter()).notifyDataSetChanged();
             }
 
@@ -304,6 +305,7 @@ public class TripListFragment extends ListFragment {
                 Log.e(TAG, fault.toString());
             }
         });
+
 
     }
 
